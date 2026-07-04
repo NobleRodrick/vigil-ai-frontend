@@ -1,0 +1,184 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── Typography ─────────────────────────────────────────── */
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* ── Ink / Command Surface (sidebar, headers) ──────────────── */
+  --color-ink-950: #0a1726;
+  --color-ink-900: #0f2238;
+  --color-ink-800: #16314d;
+  --color-ink-700: #1e3f63;
+  --color-ink-600: #2b5483;
+
+  /* ── Brand Navy ─────────────────────────────────────────── */
+  --color-navy-700: #1b3a6b;
+  --color-navy-600: #2a4f86;
+  --color-navy-500: #3d66a3;
+  --color-navy-100: #e3eaf4;
+  --color-navy-50: #f1f5fa;
+
+  /* ── Paper / Content Surface ────────────────────────────── */
+  --color-paper-0: #ffffff;
+  --color-paper-50: #f7f8fa;
+  --color-paper-100: #eef1f5;
+  --color-paper-200: #e3e8ee;
+
+  /* ── Slate / Text ───────────────────────────────────────── */
+  --color-slate-900: #16202b;
+  --color-slate-700: #36414e;
+  --color-slate-500: #5b6b7c;
+  --color-slate-400: #889aab;
+  --color-slate-300: #b7c2cd;
+  --color-line: #dce3ea;
+
+  /* ── Verdict Inks (stamp colors — institutional, not neon) ── */
+  --color-safe-ink: #1b6e46;
+  --color-safe-bg: #e9f5ee;
+  --color-safe-line: #b6dcc4;
+
+  --color-warn-ink: #9c6611;
+  --color-warn-bg: #fbf2e2;
+  --color-warn-line: #ecd29c;
+
+  --color-danger-ink: #9c3530;
+  --color-danger-bg: #fbeae8;
+  --color-danger-line: #eebab5;
+
+  /* ── National accent rule (Cameroon tricolor, used once) ──── */
+  --color-flag-green: #007a33;
+  --color-flag-red: #ce1126;
+  --color-flag-yellow: #fcd116;
+
+  /* ── Radii ──────────────────────────────────────────────── */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background-color: var(--color-paper-50);
+    color: var(--color-slate-900);
+  }
+
+  * {
+    border-color: var(--color-line);
+  }
+
+  ::selection {
+    background-color: var(--color-navy-100);
+    color: var(--color-navy-700);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-navy-500);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-slate-300) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: var(--color-slate-300);
+    border-radius: 999px;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ── Toast entrance ──────────────────────────────────────────── */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-in {
+  animation: toast-in 0.22s ease-out;
+}
+
+/* ── National tricolor rule — used exactly once, as letterhead ── */
+.tricolor-rule {
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--color-flag-green) 0 33.33%,
+    var(--color-flag-red) 33.33% 66.66%,
+    var(--color-flag-yellow) 66.66% 100%
+  );
+}
+
+/* ── Stamp signature element ─────────────────────────────────
+   Evokes the official rubber "cachet" used throughout
+   Francophone African administrative documents.
+------------------------------------------------------------- */
+.stamp {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-width: 2px;
+  border-style: solid;
+  border-radius: 999px;
+  transform: rotate(-3deg);
+  user-select: none;
+}
+
+.stamp::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  opacity: 0.55;
+}
+
+.stamp-safe {
+  color: var(--color-safe-ink);
+  border-color: var(--color-safe-ink);
+  background-color: var(--color-safe-bg);
+}
+.stamp-suspicious {
+  color: var(--color-warn-ink);
+  border-color: var(--color-warn-ink);
+  background-color: var(--color-warn-bg);
+}
+.stamp-malicious {
+  color: var(--color-danger-ink);
+  border-color: var(--color-danger-ink);
+  background-color: var(--color-danger-bg);
+}

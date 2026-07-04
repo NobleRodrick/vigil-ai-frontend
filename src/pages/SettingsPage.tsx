@@ -1,0 +1,127 @@
+import { useState, type FormEvent } from "react";
+import { CheckCircle2 } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
+import { authApi } from "@/lib/endpoints";
+import { getErrorMessage } from "@/lib/api";
+import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+
+export default function SettingsPage() {
+  const { t, lang, setLang } = useLanguage();
+  const { user } = useAuth();
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-6 p-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>{t.settings.profile}</CardTitle>
+        </CardHeader>
+        <CardBody className="space-y-3 text-sm">
+          <div className="flex justify-between">
+            <span className="text-slate-500">{t.users.fullName}</span>
+            <span className="font-medium text-slate-900">{user?.full_name}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-500">{t.users.email}</span>
+            <span className="font-medium text-slate-900">{user?.email}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-500">{t.users.role}</span>
+            <span className="font-medium text-slate-900">{user ? t.roles[user.role.name] : ""}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-500">{t.users.organization}</span>
+            <span className="font-medium text-slate-900">{user?.organization ?? "—"}</span>
+          </div>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t.settings.language}</CardTitle>
+        </CardHeader>
+        <CardBody>
+          <div className="flex gap-2">
+            <Button variant={lang === "fr" ? "primary" : "outline"} size="sm" onClick={() => setLang("fr")}>
+              Français
+            </Button>
+            <Button variant={lang === "en" ? "primary" : "outline"} size="sm" onClick={() => setLang("en")}>
+              English
+            </Button>
+          </div>
+        </CardBody>
+      </Card>
+
+      <ChangePasswordCard />
+    </div>
+  );
+}
+
+function ChangePasswordCard() {
+  const { t } = useLanguage();
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(false);
+    setIsSubmitting(true);
+    try {
+      await authApi.changePassword(currentPassword, newPassword);
+      setSuccess(true);
+      setCurrentPassword("");
+      setNewPassword("");
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t.settings.changePassword}</CardTitle>
+      </CardHeader>
+      <CardBody>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="rounded-md border border-danger-line bg-danger-bg px-3 py-2.5 text-sm text-danger-ink">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="flex items-center gap-2 rounded-md border border-safe-line bg-safe-bg px-3 py-2.5 text-sm text-safe-ink">
+              <CheckCircle2 className="h-4 w-4" />
+              {t.settings.saved}
+            </div>
+          )}
+          <Input
+            label={t.settings.currentPassword}
+            type="password"
+            required
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+          />
+          <Input
+            label={t.settings.newPassword}
+            type="password"
+            required
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            hint="≥10 chars, upper+lower+digit+symbol"
+          />
+          <Button type="submit" isLoading={isSubmitting}>
+            {t.settings.save}
+          </Button>
+        </form>
+      </CardBody>
+    </Card>
+  );
+}
