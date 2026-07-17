@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { Search, Download, FolderSearch } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
@@ -19,6 +19,7 @@ const PAGE_SIZE = 20;
 export default function CasesPage() {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
@@ -193,10 +194,15 @@ export default function CasesPage() {
                 </thead>
                 <tbody className="divide-y divide-line">
                   {data.items.map((c) => (
-                    <tr key={c.id} className="transition-colors hover:bg-paper-50">
+                    <tr
+                      key={c.id}
+                      onClick={() => navigate(`/cases/${c.id}`)}
+                      className="cursor-pointer transition-colors hover:bg-paper-50"
+                    >
                       <td className="px-5 py-3">
                         <Link
                           to={`/cases/${c.id}`}
+                          onClick={(e) => e.stopPropagation()}
                           className="font-mono font-medium text-navy-700 hover:underline"
                         >
                           {c.case_number}

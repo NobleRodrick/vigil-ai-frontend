@@ -2,6 +2,7 @@
 
 import { API_BASE_URL, api, tokenStore } from "@/lib/api";
 import type {
+  AuditLogEntry,
   CaseDetail,
   CaseHistoryEntry,
   CaseNote,
@@ -234,6 +235,24 @@ export const usersApi = {
   },
   deactivate: async (id: string): Promise<void> => {
     await api.delete(`/users/${id}`);
+  },
+};
+
+// ── Audit Log (Admin) ────────────────────────────────────────
+export const auditApi = {
+  list: async (params: {
+    page?: number;
+    page_size?: number;
+    action?: string;
+    resource_type?: string;
+    user_search?: string;
+  }): Promise<Paginated<AuditLogEntry>> => {
+    const { data } = await api.get("/audit-logs/", { params });
+    return data;
+  },
+  actions: async (): Promise<string[]> => {
+    const { data } = await api.get("/audit-logs/actions");
+    return data;
   },
 };
 

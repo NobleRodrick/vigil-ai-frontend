@@ -198,6 +198,19 @@ export interface RiskDistribution {
   median_score: number | null;
 }
 
+export interface AuditLogEntry {
+  id: number;
+  action: string;
+  resource_type: string | null;
+  resource_id: string | null;
+  details: Record<string, unknown> | null;
+  ip_address: string | null;
+  created_at: string;
+  user_id: string | null;
+  user_email: string | null;
+  user_name: string | null;
+}
+
 export interface HealthStatus {
   status: "healthy" | "degraded" | string;
   version: string;

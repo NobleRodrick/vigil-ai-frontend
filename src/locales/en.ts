@@ -168,6 +168,16 @@ export const en: TranslationKeys = {
     mineOnly: "My submissions only",
     verdict: "Verdict",
   },
+  auditLog: {
+    time: "Timestamp",
+    user: "User",
+    action: "Action",
+    detail: "Details",
+    ip: "IP address",
+    allActions: "All actions",
+    searchUser: "Search by user (email or name)…",
+    empty: "No audit entries match your criteria.",
+  },
   users: {
     title: "User management",
     subtitle: "Manage accounts and access roles",

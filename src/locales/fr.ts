@@ -166,6 +166,16 @@ export const fr = {
     mineOnly: "Mes soumissions uniquement",
     verdict: "Verdict",
   },
+  auditLog: {
+    time: "Horodatage",
+    user: "Utilisateur",
+    action: "Action",
+    detail: "Détails",
+    ip: "Adresse IP",
+    allActions: "Toutes les actions",
+    searchUser: "Rechercher par utilisateur (e-mail ou nom)…",
+    empty: "Aucune entrée d'audit ne correspond à vos critères.",
+  },
   users: {
     title: "Gestion des utilisateurs",
     subtitle: "Gérer les comptes et les rôles d'accès",
