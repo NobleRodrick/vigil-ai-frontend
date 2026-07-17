@@ -41,6 +41,8 @@ export interface Analysis {
   processing_time_ms: number | null;
   analyzed_at: string | null;
   created_at: string;
+  key_indicators: string[] | null;
+  sub_scores: Record<string, number> | null;
 }
 
 export interface SubmissionSummary {
@@ -56,6 +58,9 @@ export interface SubmissionSummary {
   content_text_preview: string | null;
   created_at: string;
   updated_at: string;
+  risk_score: number | null;
+  classification: Classification | null;
+  fake_news_probability: number | null;
 }
 
 export interface SubmissionDetail extends SubmissionSummary {
@@ -132,6 +137,8 @@ export interface CaseDetail {
   engine_used: string | null;
   processing_time_ms: number | null;
   analyzed_at: string | null;
+  key_indicators: string[] | null;
+  sub_scores: Record<string, number> | null;
   assignee_id: string | null;
   assignee_name: string | null;
   creator_name: string | null;
@@ -189,6 +196,14 @@ export interface RiskDistribution {
   buckets: RiskScoreBucket[];
   average_score: number | null;
   median_score: number | null;
+}
+
+export interface HealthStatus {
+  status: "healthy" | "degraded" | string;
+  version: string;
+  environment: string;
+  timestamp: string;
+  checks: Record<string, string>;
 }
 
 export interface ApiError {

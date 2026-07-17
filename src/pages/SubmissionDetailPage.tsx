@@ -9,6 +9,7 @@ import type { SubmissionDetail } from "@/types/api";
 import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/Card";
 import { VerdictStamp } from "@/components/ui/VerdictStamp";
 import { PageLoading, ErrorState } from "@/components/ui/Feedback";
+import { IndicatorChips, MediaPreview, SubScoreBars } from "@/components/ui/AnalysisExtras";
 
 export default function SubmissionDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -81,6 +82,7 @@ export default function SubmissionDetailPage() {
               {data.content_url}
             </a>
           )}
+          <MediaPreview contentType={data.content_type} url={data.content_url} />
           {data.file_name && <p className="text-sm text-slate-600">{data.file_name}</p>}
         </CardBody>
       </Card>
@@ -103,6 +105,8 @@ export default function SubmissionDetailPage() {
                 />
                 <Metric icon={<Cpu className="h-3.5 w-3.5" />} label={t.caseDetail.engine} value={analysis.engine_used ?? "—"} />
               </div>
+              <SubScoreBars subScores={analysis.sub_scores} />
+              <IndicatorChips indicators={analysis.key_indicators} />
               {explanation && (
                 <p className="rounded-md border border-line bg-paper-50 p-3 text-sm leading-relaxed text-slate-700">
                   {explanation}

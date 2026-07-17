@@ -3,11 +3,12 @@ import { Link } from "react-router-dom";
 import { FileStack, FolderOpen, ShieldAlert, CheckCircle2 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { analyticsApi, casesApi } from "@/lib/endpoints";
-import type { ContentTypeBreakdown, DashboardOverview, TimelinePoint, CaseSummary } from "@/types/api";
+import type { ContentTypeBreakdown, DashboardOverview, RiskDistribution, TimelinePoint, CaseSummary } from "@/types/api";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/Card";
 import { TimelineChart } from "@/components/charts/TimelineChart";
 import { ContentBreakdownChart } from "@/components/charts/ContentBreakdownChart";
+import { RiskDistributionChart } from "@/components/charts/RiskDistributionChart";
 import { VerdictPill } from "@/components/ui/VerdictStamp";
 import { PageLoading, ErrorState, EmptyState } from "@/components/ui/Feedback";
 import { getErrorMessage } from "@/lib/api";
@@ -18,6 +19,7 @@ export default function DashboardPage() {
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
   const [timeline, setTimeline] = useState<TimelinePoint[]>([]);
   const [breakdown, setBreakdown] = useState<ContentTypeBreakdown | null>(null);
+  const [riskDist, setRiskDist] = useState<RiskDistribution | null>(null);
   const [recentCases, setRecentCases] = useState<CaseSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,15 +28,17 @@ export default function DashboardPage() {
     setError(null);
     setIsLoading(true);
     try {
-      const [ov, tl, bd, cs] = await Promise.all([
+      const [ov, tl, bd, rd, cs] = await Promise.all([
         analyticsApi.overview(),
         analyticsApi.timeline(30),
         analyticsApi.byType(),
+        analyticsApi.riskDistribution(),
         casesApi.list({ page: 1, page_size: 5, classification: "malicious" }),
       ]);
       setOverview(ov);
       setTimeline(tl);
       setBreakdown(bd);
+      setRiskDist(rd);
       setRecentCases(cs.items);
     } catch (err) {
       setError(getErrorMessage(err));
@@ -102,6 +106,16 @@ export default function DashboardPage() {
           </CardBody>
         </Card>
       </div>
+
+      {/* Risk score distribution */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t.dashboard.riskDistribution}</CardTitle>
+        </CardHeader>
+        <CardBody>
+          <RiskDistributionChart data={riskDist} />
+        </CardBody>
+      </Card>
 
       {/* Recent high-risk cases */}
       <Card>

@@ -149,9 +149,9 @@ vigil-ai-frontend/
 | `/login` | Public | Authentication |
 | `/forgot-password` | Public | Password reset request |
 | `/` | All roles | Dashboard — KPIs, 30-day threat timeline, content-type breakdown, recent high-risk cases |
-| `/submit` | Admin, Analyst | Submit text / image / video URL / audio for AI analysis |
+| `/submit` | Admin, Analyst | Submit text / image / video / audio for AI analysis — media is submitted by URL by default, with an optional file-upload mode for image & audio |
 | `/cases` | All roles | Case list with search, status/classification/type filters, CSV export (admin) |
-| `/cases/:id` | All roles | Full case investigation workspace — analysis result, notes, status workflow, escalation |
+| `/cases/:id` | All roles | Full case investigation workspace — analysis result with dual AI/disinformation score bars, key forensic indicators, media preview, notes, status workflow, escalation |
 | `/users` | Admin | User account management |
 | `/reports` | All roles | Monthly transparency report (stub — backend generation is phase 2, FR-038) |
 | `/audit-log` | Admin | Audit trail (stub — backend records the data; a paginated list endpoint isn't wired up yet) |

@@ -9,6 +9,7 @@ import { getErrorMessage } from "@/lib/api";
 import type { SubmissionSummary } from "@/types/api";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { VerdictPill } from "@/components/ui/VerdictStamp";
 import { PageLoading, ErrorState, EmptyState } from "@/components/ui/Feedback";
 
 const PAGE_SIZE = 20;
@@ -24,6 +25,7 @@ export default function SubmissionsPage() {
   const { t } = useLanguage();
   const { user } = useAuth();
   const [page, setPage] = useState(1);
+  const [mineOnly, setMineOnly] = useState(false);
   const [data, setData] = useState<{ items: SubmissionSummary[]; total_count: number; total_pages: number } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,14 +34,16 @@ export default function SubmissionsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await submissionsApi.list({ page, page_size: PAGE_SIZE, my_only: true });
+      // Analysts/admins see the whole national queue by default; the backend
+      // force-restricts viewers to their own submissions regardless.
+      const res = await submissionsApi.list({ page, page_size: PAGE_SIZE, my_only: mineOnly });
       setData(res);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
-  }, [page]);
+  }, [page, mineOnly]);
 
   useEffect(() => {
     load();
@@ -57,6 +61,18 @@ export default function SubmissionsPage() {
 
   return (
     <div className="p-6">
+      <label className="mb-4 flex w-fit cursor-pointer items-center gap-2 text-sm text-slate-600">
+        <input
+          type="checkbox"
+          checked={mineOnly}
+          onChange={(e) => {
+            setPage(1);
+            setMineOnly(e.target.checked);
+          }}
+          className="h-4 w-4 rounded border-line accent-navy-700"
+        />
+        {t.submissions.mineOnly}
+      </label>
       <Card>
         {isLoading ? (
           <PageLoading />
@@ -75,6 +91,7 @@ export default function SubmissionsPage() {
                   <tr className="border-b border-line text-left text-xs font-medium uppercase tracking-wide text-slate-500">
                     <th className="px-5 py-3">{t.cases.caseNumber}</th>
                     <th className="px-5 py-3">{t.cases.type}</th>
+                    <th className="px-5 py-3">{t.submissions.verdict}</th>
                     <th className="px-5 py-3">{t.cases.status}</th>
                     <th className="px-5 py-3">{t.cases.created}</th>
                     {user?.role.name === "admin" && <th className="px-5 py-3" />}
@@ -89,6 +106,16 @@ export default function SubmissionsPage() {
                         </Link>
                       </td>
                       <td className="px-5 py-3 capitalize text-slate-600">{s.content_type}</td>
+                      <td className="px-5 py-3">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <VerdictPill classification={s.classification} score={s.risk_score} />
+                          {(s.fake_news_probability ?? 0) >= 0.5 && (
+                            <span className="rounded-full border border-danger-line bg-danger-bg px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-danger-ink">
+                              {t.caseDetail.fakeNewsTag} {Math.round((s.fake_news_probability ?? 0) * 100)}%
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-5 py-3 text-slate-600">{STATUS_LABEL[s.status] ?? s.status}</td>
                       <td className="px-5 py-3 text-slate-500">{format(parseISO(s.created_at), "PP")}</td>
                       {user?.role.name === "admin" && (

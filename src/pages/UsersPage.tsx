@@ -238,6 +238,27 @@ function EditUserPanel({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Re-fetch the account when the panel opens so edits start from the
+  // server's current state, not a possibly stale table row.
+  useEffect(() => {
+    let cancelled = false;
+    usersApi
+      .get(user.id)
+      .then((fresh) => {
+        if (cancelled) return;
+        setFullName(fresh.full_name);
+        setOrganization(fresh.organization ?? "");
+        setRole(fresh.role.name);
+        setIsActive(fresh.is_active);
+      })
+      .catch(() => {
+        /* keep the row snapshot if the fetch fails */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user.id]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);

@@ -1,9 +1,10 @@
-import { useState, type FormEvent } from "react";
-import { CheckCircle2 } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
+import { Activity, CheckCircle2, RefreshCw } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
-import { authApi } from "@/lib/endpoints";
+import { authApi, healthApi } from "@/lib/endpoints";
 import { getErrorMessage } from "@/lib/api";
+import type { HealthStatus } from "@/types/api";
 import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -55,7 +56,80 @@ export default function SettingsPage() {
       </Card>
 
       <ChangePasswordCard />
+
+      <SystemStatusCard />
     </div>
+  );
+}
+
+function SystemStatusCard() {
+  const { t } = useLanguage();
+  const [health, setHealth] = useState<HealthStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const load = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      setHealth(await healthApi.check());
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Activity className="h-4 w-4" strokeWidth={1.75} />
+          {t.settings.systemStatus}
+        </CardTitle>
+        <button
+          onClick={load}
+          className="rounded p-1 text-slate-400 hover:bg-paper-100 hover:text-slate-600"
+          aria-label={t.common.retry}
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+        </button>
+      </CardHeader>
+      <CardBody>
+        {error ? (
+          <p className="text-sm text-danger-ink">{error}</p>
+        ) : !health ? (
+          <p className="text-sm text-slate-400">{t.common.loading}</p>
+        ) : (
+          <div className="space-y-2.5 text-sm">
+            {Object.entries(health.checks).map(([service, status]) => {
+              const ok = status === "ok";
+              return (
+                <div key={service} className="flex items-center justify-between">
+                  <span className="capitalize text-slate-500">{service}</span>
+                  <span
+                    className={`flex items-center gap-1.5 font-mono text-xs font-semibold uppercase ${
+                      ok ? "text-safe-ink" : "text-danger-ink"
+                    }`}
+                  >
+                    <span className={`h-2 w-2 rounded-full ${ok ? "bg-safe-ink" : "bg-danger-ink"}`} />
+                    {ok ? t.settings.operational : t.settings.unavailable}
+                  </span>
+                </div>
+              );
+            })}
+            <div className="flex items-center justify-between border-t border-line pt-2.5 text-xs text-slate-400">
+              <span>v{health.version} · {health.environment}</span>
+              <span className="font-mono">{health.status}</span>
+            </div>
+          </div>
+        )}
+      </CardBody>
+    </Card>
   );
 }
 

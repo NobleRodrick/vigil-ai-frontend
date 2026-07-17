@@ -144,6 +144,9 @@ function TextForm({ onSuccess }: { onSuccess: (r: SubmissionQueuedResponse) => v
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <ErrorBanner message={error} />}
+      <p className="rounded-md border border-line bg-paper-50 px-3 py-2 text-xs text-slate-500">
+        {t.submit.textDualAxis}
+      </p>
       <Textarea
         label={t.submit.textLabel}
         required
@@ -181,7 +184,8 @@ function TextForm({ onSuccess }: { onSuccess: (r: SubmissionQueuedResponse) => v
   );
 }
 
-// ── FILE FORM (image / audio) ──────────────────────────────────
+// ── MEDIA FORM (image / audio) ──────────────────────────────────
+// Default mode: submit a direct media URL. Uploading a file is optional.
 function FileForm({
   kind,
   onSuccess,
@@ -190,6 +194,8 @@ function FileForm({
   onSuccess: (r: SubmissionQueuedResponse) => void;
 }) {
   const { t } = useLanguage();
+  const [mode, setMode] = useState<"link" | "upload">("link");
+  const [mediaUrl, setMediaUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [sourceUrl, setSourceUrl] = useState("");
@@ -202,17 +208,22 @@ function FileForm({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!file) {
+    if (mode === "link" ? !mediaUrl.trim() : !file) {
       setError(t.common.required);
       return;
     }
     setIsSubmitting(true);
     try {
-      const extra = { source_url: sourceUrl || undefined, analyst_notes: notes || undefined };
+      const payload = {
+        file: mode === "upload" ? file ?? undefined : undefined,
+        content_url: mode === "link" ? mediaUrl.trim() : undefined,
+        source_url: sourceUrl || undefined,
+        analyst_notes: notes || undefined,
+      };
       const res =
         kind === "image"
-          ? await submissionsApi.submitImage(file, extra)
-          : await submissionsApi.submitAudio(file, extra);
+          ? await submissionsApi.submitImage(payload)
+          : await submissionsApi.submitAudio(payload);
       onSuccess(res);
     } catch (err) {
       setError(getErrorMessage(err));
@@ -225,42 +236,76 @@ function FileForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <ErrorBanner message={error} />}
 
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-slate-700">
-          {kind === "image" ? t.submit.uploadImage : t.submit.uploadAudio}
-          <span className="ml-0.5 text-danger-ink">*</span>
-        </label>
-        <label
-          onDragOver={(e) => {
-            e.preventDefault();
-            setIsDragging(true);
-          }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setIsDragging(false);
-            const dropped = e.dataTransfer.files?.[0];
-            if (dropped) setFile(dropped);
-          }}
-          className={clsx(
-            "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors",
-            isDragging ? "border-navy-500 bg-navy-50" : "border-line hover:bg-paper-50"
-          )}
-        >
-          <UploadCloud className="h-7 w-7 text-slate-400" strokeWidth={1.5} />
-          {file ? (
-            <p className="text-sm font-medium text-slate-700">{file.name}</p>
-          ) : (
-            <p className="text-sm text-slate-500">{t.submit.dragDrop}</p>
-          )}
-          <input
-            type="file"
-            accept={accept}
-            className="hidden"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          />
-        </label>
+      {/* Link (default) / upload (optional) mode switch */}
+      <div className="flex gap-1 rounded-md border border-line bg-paper-50 p-0.5">
+        {(
+          [
+            { key: "link", label: t.submit.byLink },
+            { key: "upload", label: t.submit.byUpload },
+          ] as const
+        ).map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setMode(key)}
+            className={clsx(
+              "flex-1 rounded px-3 py-1.5 text-sm font-medium transition-colors",
+              mode === key ? "bg-paper-0 text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            {label}
+          </button>
+        ))}
       </div>
+
+      {mode === "link" ? (
+        <Input
+          label={kind === "image" ? t.submit.imageUrl : t.submit.audioUrl}
+          required
+          type="url"
+          value={mediaUrl}
+          onChange={(e) => setMediaUrl(e.target.value)}
+          placeholder="https://…"
+          hint={t.submit.mediaUrlHelp}
+        />
+      ) : (
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-slate-700">
+            {kind === "image" ? t.submit.uploadImage : t.submit.uploadAudio}
+            <span className="ml-0.5 text-danger-ink">*</span>
+          </label>
+          <label
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+              const dropped = e.dataTransfer.files?.[0];
+              if (dropped) setFile(dropped);
+            }}
+            className={clsx(
+              "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors",
+              isDragging ? "border-navy-500 bg-navy-50" : "border-line hover:bg-paper-50"
+            )}
+          >
+            <UploadCloud className="h-7 w-7 text-slate-400" strokeWidth={1.5} />
+            {file ? (
+              <p className="text-sm font-medium text-slate-700">{file.name}</p>
+            ) : (
+              <p className="text-sm text-slate-500">{t.submit.dragDrop}</p>
+            )}
+            <input
+              type="file"
+              accept={accept}
+              className="hidden"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            />
+          </label>
+        </div>
+      )}
 
       <Input
         label={t.submit.sourceUrl}

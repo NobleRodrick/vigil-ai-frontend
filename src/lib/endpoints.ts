@@ -1,6 +1,6 @@
 // VIGIL-AI Cameroun — API Endpoint Functions
 
-import { api, tokenStore } from "@/lib/api";
+import { API_BASE_URL, api, tokenStore } from "@/lib/api";
 import type {
   CaseDetail,
   CaseHistoryEntry,
@@ -8,6 +8,7 @@ import type {
   CaseSummary,
   ContentTypeBreakdown,
   DashboardOverview,
+  HealthStatus,
   LoginResponse,
   Paginated,
   RiskDistribution,
@@ -48,6 +49,20 @@ export const authApi = {
 };
 
 // ── Submissions ──────────────────────────────────────────────
+function buildMediaForm(payload: {
+  file?: File;
+  content_url?: string;
+  source_url?: string;
+  analyst_notes?: string;
+}): FormData {
+  const form = new FormData();
+  if (payload.file) form.append("file", payload.file);
+  if (payload.content_url) form.append("content_url", payload.content_url);
+  if (payload.source_url) form.append("source_url", payload.source_url);
+  if (payload.analyst_notes) form.append("analyst_notes", payload.analyst_notes);
+  return form;
+}
+
 export const submissionsApi = {
   submitText: async (payload: {
     content_text: string;
@@ -58,27 +73,27 @@ export const submissionsApi = {
     const { data } = await api.post("/submissions/text", payload);
     return data;
   },
-  submitImage: async (
-    file: File,
-    extra: { source_url?: string; analyst_notes?: string }
-  ): Promise<SubmissionQueuedResponse> => {
-    const form = new FormData();
-    form.append("file", file);
-    if (extra.source_url) form.append("source_url", extra.source_url);
-    if (extra.analyst_notes) form.append("analyst_notes", extra.analyst_notes);
+  // Image & audio accept EITHER a direct media URL (default workflow)
+  // OR an uploaded file (optional; mirrored to Cloudinary server-side).
+  submitImage: async (payload: {
+    file?: File;
+    content_url?: string;
+    source_url?: string;
+    analyst_notes?: string;
+  }): Promise<SubmissionQueuedResponse> => {
+    const form = buildMediaForm(payload);
     const { data } = await api.post("/submissions/image", form, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return data;
   },
-  submitAudio: async (
-    file: File,
-    extra: { source_url?: string; analyst_notes?: string }
-  ): Promise<SubmissionQueuedResponse> => {
-    const form = new FormData();
-    form.append("file", file);
-    if (extra.source_url) form.append("source_url", extra.source_url);
-    if (extra.analyst_notes) form.append("analyst_notes", extra.analyst_notes);
+  submitAudio: async (payload: {
+    file?: File;
+    content_url?: string;
+    source_url?: string;
+    analyst_notes?: string;
+  }): Promise<SubmissionQueuedResponse> => {
+    const form = buildMediaForm(payload);
     const { data } = await api.post("/submissions/audio", form, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -191,6 +206,10 @@ export const usersApi = {
     const { data } = await api.get("/users/", { params });
     return data;
   },
+  get: async (id: string): Promise<User> => {
+    const { data } = await api.get(`/users/${id}`);
+    return data;
+  },
   create: async (payload: {
     email: string;
     password: string;
@@ -215,6 +234,15 @@ export const usersApi = {
   },
   deactivate: async (id: string): Promise<void> => {
     await api.delete(`/users/${id}`);
+  },
+};
+
+// ── System Health ────────────────────────────────────────────
+export const healthApi = {
+  // /health lives at the API root, outside /api/v1 — pass the absolute URL
+  check: async (): Promise<HealthStatus> => {
+    const { data } = await api.get<HealthStatus>(`${API_BASE_URL}/health`);
+    return data;
   },
 };
 

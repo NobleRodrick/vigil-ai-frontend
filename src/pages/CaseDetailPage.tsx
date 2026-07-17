@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/Input";
 import { StatusBadge } from "@/components/ui/Feedback";
 import { VerdictStamp } from "@/components/ui/VerdictStamp";
 import { PageLoading, ErrorState } from "@/components/ui/Feedback";
+import { IndicatorChips, MediaPreview, SubScoreBars } from "@/components/ui/AnalysisExtras";
 
 export default function CaseDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -90,7 +91,9 @@ export default function CaseDetailPage() {
     try {
       await casesApi.addNote(id, noteText.trim());
       setNoteText("");
-      await load();
+      // Refresh just the notes list instead of re-fetching the whole case
+      const notes = await casesApi.listNotes(id);
+      setData((prev) => (prev ? { ...prev, notes } : prev));
     } catch (err) {
       setActionError(getErrorMessage(err));
     } finally {
@@ -190,6 +193,7 @@ export default function CaseDetailPage() {
                   {data.content_url}
                 </a>
               )}
+              <MediaPreview contentType={data.content_type} url={data.content_url} />
               {data.file_name && <p className="text-sm text-slate-600">{data.file_name}</p>}
               {data.analyst_notes && (
                 <p className="text-sm text-slate-500">
@@ -219,6 +223,8 @@ export default function CaseDetailPage() {
                     />
                     <Metric icon={<Cpu className="h-3.5 w-3.5" />} label={t.caseDetail.engine} value={data.engine_used ?? "—"} />
                   </div>
+                  <SubScoreBars subScores={data.sub_scores} />
+                  <IndicatorChips indicators={data.key_indicators} />
                   {explanation && (
                     <p className="rounded-md border border-line bg-paper-50 p-3 text-sm leading-relaxed text-slate-700">
                       {explanation}
